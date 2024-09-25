@@ -1,0 +1,58 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Load the cleaned dataset
+df_cleaned_scaled = pd.read_csv('/content/cleaned_mall_customers.csv')
+
+# Step 1: Elbow Method to find the optimal number of clusters
+# Features to use for clustering
+X = df_cleaned_scaled[['Age', 'Annual Income', 'Spending Score']]
+
+# Calculate the Within-Cluster-Sum of Squared Errors (WCSS) for different number of clusters
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=42)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+
+# Plot the Elbow Method graph
+plt.figure(figsize=(10, 5))
+plt.plot(range(1, 11), wcss, marker='o', linestyle='--', color='b')
+plt.title('Elbow Method to Determine Optimal Number of Clusters')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+# Step 2: Applying K-Means with the optimal number of clusters
+# Based on the Elbow method graph, let's assume the optimal number of clusters is 5
+kmeans = KMeans(n_clusters=5, init='k-means++', max_iter=300, n_init=10, random_state=42)
+y_kmeans = kmeans.fit_predict(X)
+
+# Step 3: Add the cluster labels to the dataset
+df_cleaned_scaled['Cluster'] = y_kmeans
+
+# Step 4: Visualizing the clusters (2D plot for 'Annual Income' and 'Spending Score')
+plt.figure(figsize=(10, 7))
+plt.scatter(X[y_kmeans == 0]['Annual Income'], X[y_kmeans == 0]['Spending Score'], s=100, c='red', label='Cluster 1')
+plt.scatter(X[y_kmeans == 1]['Annual Income'], X[y_kmeans == 1]['Spending Score'], s=100, c='blue', label='Cluster 2')
+plt.scatter(X[y_kmeans == 2]['Annual Income'], X[y_kmeans == 2]['Spending Score'], s=100, c='green', label='Cluster 3')
+plt.scatter(X[y_kmeans == 3]['Annual Income'], X[y_kmeans == 3]['Spending Score'], s=100, c='cyan', label='Cluster 4')
+plt.scatter(X[y_kmeans == 4]['Annual Income'], X[y_kmeans == 4]['Spending Score'], s=100, c='magenta', label='Cluster 5')
+
+# Plot the centroids
+plt.scatter(kmeans.cluster_centers_[:, 1], kmeans.cluster_centers_[:, 2], s=300, c='yellow', label='Centroids')
+plt.title('Customer Segmentation Based on Annual Income and Spending Score')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.grid()
+plt.show()
+
+# Step 5: Save the dataset with the cluster labels
+df_cleaned_scaled.to_csv('mall_customers_with_clusters.csv', index=False)
+
+print("Clustered data saved successfully to mall_customers_with_clusters.csv")
