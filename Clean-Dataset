@@ -1,0 +1,48 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv(''/content/Shopping Mall Customer Segmentation Data .csv'')
+
+# Check the column names
+print(df.columns)
+
+# Step 1: Rename columns for ease of use (if necessary)
+# Rename the columns without changing the actual names in the dataset
+# df.rename(columns={'Annual Income': 'Annual_Income', 'Spending Score': 'Spending_Score'}, inplace=True)
+
+# Step 2: Check for missing values
+print(df.isnull().sum())
+
+# Step 3: Handle Categorical Data (Gender conversion)
+df['Gender'] = df['Gender'].map({'Male': 0, 'Female': 1})
+
+# Step 4: Handle outliers using IQR method
+Q1 = df[['Age', 'Annual Income', 'Spending Score']].quantile(0.25)
+Q3 = df[['Age', 'Annual Income', 'Spending Score']].quantile(0.75)
+IQR = Q3 - Q1
+
+# Remove outliers using the 1.5*IQR rule
+df_cleaned = df[~((df[['Age', 'Annual Income', 'Spending Score']] < (Q1 - 1.5 * IQR)) | 
+                  (df[['Age', 'Annual Income', 'Spending Score']] > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Step 5: Scale the features
+scaler = StandardScaler()
+df_cleaned_scaled = df_cleaned[['Age', 'Annual Income', 'Spending Score']]
+df_cleaned_scaled = scaler.fit_transform(df_cleaned_scaled)
+
+# Convert the scaled data back to a DataFrame
+df_cleaned_scaled = pd.DataFrame(df_cleaned_scaled, columns=['Age', 'Annual Income', 'Spending Score'])
+
+# Add back the 'Customer ID' and 'Gender' columns to the cleaned DataFrame
+df_cleaned_scaled['Customer ID'] = df_cleaned['Customer ID'].values
+df_cleaned_scaled['Gender'] = df_cleaned['Gender'].values
+
+# Save the cleaned and scaled dataset to a CSV file
+df_cleaned_scaled.to_csv('cleaned_mall_customers.csv', index=False)
+
+print("Cleaned data saved successfully to cleaned_mall_customers.csv")
